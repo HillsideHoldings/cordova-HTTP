@@ -1,4 +1,4 @@
-cordova.define("cordova-plugin-http.CordovaHttpPlugin", function(require, exports, module) {
+
 /*global angular*/
 
 /*
@@ -187,4 +187,3 @@ if (typeof angular !== "undefined") {
     window.cordovaHTTP = http;
 }
 
-});
