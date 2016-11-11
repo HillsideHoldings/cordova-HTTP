@@ -1,3 +1,4 @@
+cordova.define("cordova-plugin-http.CordovaHttpPlugin", function(require, exports, module) {
 /*global angular*/
 
 /*
@@ -62,7 +63,7 @@ var http = {
         headers = mergeHeaders(this.headers, headers);
         return exec(success, failure, "CordovaHttpPlugin", "uploadFile", [url, params, headers, filePath, name]);
     },
-    downloadFile: function(url, params, headers, filePath, success, failure) {
+    downloadFile: function(url, params, headers, filePath, append, success, failure, progress) {
         /*
          *
          * Licensed to the Apache Software Foundation (ASF) under one
@@ -96,8 +97,20 @@ var http = {
             entry.nativeURL = result.file.nativeURL;
             success(entry);
         };
-        return exec(win, failure, "CordovaHttpPlugin", "downloadFile", [url, params, headers, filePath]);
+        return exec(function(response){
+            if(response.status == 600){
+                // it is a progress update
+                if(progress != null && progress != "undefined") progress(response);
+            }else{
+                // it is a success callback
+                win(response);
+            }
+        }, failure, "CordovaHttpPlugin", "downloadFile", [url, params, headers, filePath, append]);
+    },
+    abortDownload: function() {
+        return exec(null, null, "CordovaHttpPlugin", "abortDownload", []);
     }
+
 };
 
 module.exports = http;
@@ -173,3 +186,5 @@ if (typeof angular !== "undefined") {
 } else {
     window.cordovaHTTP = http;
 }
+
+});
