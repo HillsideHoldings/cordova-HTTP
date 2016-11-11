@@ -39,6 +39,7 @@ import com.github.kevinsawicki.http.HttpRequest;
 
 public class CordovaHttpPlugin extends CordovaPlugin {
     private static final String TAG = "CordovaHTTP";
+    CordovaHttpDownload download;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -76,7 +77,7 @@ public class CordovaHttpPlugin extends CordovaPlugin {
                 boolean enable = args.getBoolean(0);
                 this.enableSSLPinning(enable);
                 callbackContext.success();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 callbackContext.error("There was an error setting up ssl pinning");
             }
@@ -105,8 +106,14 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             HashMap<?, ?> paramsMap = this.getMapFromJSONObject(params);
             HashMap<String, String> headersMap = this.getStringMapFromJSONObject(headers);
             String filePath = args.getString(3);
-            CordovaHttpDownload download = new CordovaHttpDownload(urlString, paramsMap, headersMap, callbackContext, filePath);
+            boolean appendToExisting = args.getBoolean(4);
+            download = new CordovaHttpDownload(urlString, paramsMap, headersMap, callbackContext, filePath, appendToExisting);
             cordova.getThreadPool().execute(download);
+        } else if (action.equals("abortDownload")) {
+            if (download != null) {
+                download.abortDownload();
+                download = null;
+            }
         } else {
             return false;
         }
@@ -131,12 +138,12 @@ public class CordovaHttpPlugin extends CordovaPlugin {
             // scan the www/certificates folder for .cer files as well
             files = assetManager.list("www/certificates");
             for (int i = 0; i < files.length; i++) {
-              index = files[i].lastIndexOf('.');
-              if (index != -1) {
-                if (files[i].substring(index).equals(".cer")) {
-                  cerFiles.add("www/certificates/" + files[i]);
+                index = files[i].lastIndexOf('.');
+                if (index != -1) {
+                    if (files[i].substring(index).equals(".cer")) {
+                        cerFiles.add("www/certificates/" + files[i]);
+                    }
                 }
-              }
             }
 
             for (int i = 0; i < cerFiles.size(); i++) {
@@ -155,7 +162,7 @@ public class CordovaHttpPlugin extends CordovaPlugin {
         Iterator<?> i = object.keys();
 
         while (i.hasNext()) {
-            String key = (String)i.next();
+            String key = (String) i.next();
             map.put(key, object.getString(key));
         }
         return map;
@@ -165,8 +172,8 @@ public class CordovaHttpPlugin extends CordovaPlugin {
         HashMap<String, Object> map = new HashMap<String, Object>();
         Iterator<?> i = object.keys();
 
-        while(i.hasNext()) {
-            String key = (String)i.next();
+        while (i.hasNext()) {
+            String key = (String) i.next();
             map.put(key, object.get(key));
         }
         return map;
